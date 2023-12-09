@@ -50,7 +50,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         return;
     }
     if (M == 64 && N == 64) {
-        int i, j, ii;
+        int i, j, ii, jj;
         for (i = 0; i < N; i += block_size)
             for (j = 0; j < M; j += block_size) {
                 for (ii = i; ii < i + block_size/2 && ii < N; ++ii) {
@@ -72,10 +72,32 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                     int tmp6 = A[ii][j+6];
                     int tmp7 = A[ii][j+7];
 
-                    B[j+4][ii] = tmp4;
-                    B[j+5][ii] = tmp5;
-                    B[j+6][ii] = tmp6;
-                    B[j+7][ii] = tmp7;
+                    B[j][ii+4] = tmp4;
+                    B[j+1][ii+4] = tmp5;
+                    B[j+2][ii+4] = tmp6;
+                    B[j+3][ii+4] = tmp7;
+                }
+                for (jj = j; jj < j + block_size/2 && jj < M; ++jj) {
+                    // unloop
+                    int tmp4 = B[jj][i+4];
+                    int tmp5 = B[jj][i+5];
+                    int tmp6 = B[jj][i+6];
+                    int tmp7 = B[jj][i+7];
+
+                    int tmp44 = A[i+4][jj];
+                    int tmp55 = A[i+5][jj];
+                    int tmp66 = A[i+6][jj];
+                    int tmp77 = A[i+7][jj];
+
+                    B[jj][i+4] = tmp44;
+                    B[jj][i+5] = tmp55;
+                    B[jj][i+6] = tmp66;
+                    B[jj][i+7] = tmp77;
+
+                    B[jj+4][i] = tmp4;
+                    B[jj+4][i+1] = tmp5;
+                    B[jj+4][i+2] = tmp6;
+                    B[jj+4][i+3] = tmp7;
                 }
                 for (ii = i + block_size/2; ii < i + block_size && ii < N; ++ii) {
                     // unloop
@@ -88,18 +110,6 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                     B[j+5][ii] = tmp5;
                     B[j+6][ii] = tmp6;
                     B[j+7][ii] = tmp7;
-                }
-                for (ii = i + block_size/2; ii < i + block_size && ii < N; ++ii) {
-                    // unloop
-                    int tmp0 = A[ii][j];
-                    int tmp1 = A[ii][j+1];
-                    int tmp2 = A[ii][j+2];
-                    int tmp3 = A[ii][j+3];
-
-                    B[j][ii] = tmp0;
-                    B[j+1][ii] = tmp1;
-                    B[j+2][ii] = tmp2;
-                    B[j+3][ii] = tmp3;
                 }
             }
         return;
